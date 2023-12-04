@@ -1,4 +1,4 @@
-module github.com/chunnior/user-tastes-service
+module github.com/chunnior/users
 
 go 1.16
 

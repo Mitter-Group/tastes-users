@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/chunnior/user-tastes-service/internal/domain/callback"
-	"github.com/chunnior/user-tastes-service/internal/domain/login"
+	"github.com/chunnior/users/internal/domain/callback"
+	"github.com/chunnior/users/internal/domain/login"
 	"github.com/gofiber/fiber/v2"
 )
 

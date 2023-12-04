@@ -1,7 +1,7 @@
 package router
 
 import (
-	"github.com/chunnior/user-tastes-service/internal/app/handler"
+	"github.com/chunnior/users/internal/app/handler"
 	"github.com/gofiber/fiber/v2"
 )
 

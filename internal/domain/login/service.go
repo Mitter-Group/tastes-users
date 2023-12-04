@@ -9,9 +9,9 @@ import (
 	"net/http"
 	"net/url"
 
-	"github.com/chunnior/user-tastes-service/internal/domain/callback"
-	"github.com/chunnior/user-tastes-service/internal/domain/user"
-	"github.com/chunnior/user-tastes-service/pkg/config"
+	"github.com/chunnior/users/internal/domain/callback"
+	"github.com/chunnior/users/internal/domain/user"
+	"github.com/chunnior/users/pkg/config"
 )
 
 type LoginRequest struct {

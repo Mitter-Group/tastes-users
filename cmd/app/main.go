@@ -5,10 +5,10 @@ import (
 
 	"net/http"
 
-	"github.com/chunnior/user-tastes-service/internal/app/handler"
-	"github.com/chunnior/user-tastes-service/internal/app/router"
-	"github.com/chunnior/user-tastes-service/internal/domain/login"
-	"github.com/chunnior/user-tastes-service/pkg/config"
+	"github.com/chunnior/users/internal/app/handler"
+	"github.com/chunnior/users/internal/app/router"
+	"github.com/chunnior/users/internal/domain/login"
+	"github.com/chunnior/users/pkg/config"
 
 	"github.com/gofiber/fiber/v2"
 )

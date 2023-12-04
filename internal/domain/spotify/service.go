@@ -1,7 +1,7 @@
 package spotify
 
 import (
-	"github.com/chunnior/user-tastes-service/internal/domain/login"
+	"github.com/chunnior/users/internal/domain/login"
 )
 
 type SpotifyService interface {
