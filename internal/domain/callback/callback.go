@@ -19,7 +19,7 @@ type CallbackResponse struct {
 	Email        string       `json:"email"`
 	Product      string       `json:"product"`
 	Birthdate    string       `json:"birthdate"`
-	Token        string       `json:"token"`
+	AccessToken  string       `json:"access_token"`
 	RefreshToken string       `json:"refresh_token"`
 	TokenType    string       `json:"token_type"`
 }
@@ -38,22 +38,3 @@ type Image struct {
 	Width  int    `json:"width"`
 	URL    string `json:"url"`
 }
-
-/*
-type CallbackResponse interface {
-	GetDisplayName() string
-		GetFollowers() Followers
-		GetHref() string
-		GetID() string
-		GetURI() string
-		GetCountry() string
-		GetEmail() string
-		GetProduct() string
-		GetBirthdate() string
-}
-*/
-
-// type Followers interface {
-// 	GetTotal() int
-// 	GetHref() string
-// }

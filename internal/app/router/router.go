@@ -5,8 +5,8 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-func SetupRoutes(app *fiber.App, loginHandler *handler.LoginHandler) {
-	// app.Post("/login", handler.Login)
+func SetupRoutes(app *fiber.App, loginHandler *handler.LoginHandler, providerHandler *handler.ProviderHandler) {
 	app.Post("/login", loginHandler.Login)
 	app.Post("/callback", loginHandler.Callback)
+	app.Get("/:provider/:dataType/:userId", providerHandler.ProviderInfo)
 }

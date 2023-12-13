@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/url"
 
+	"github.com/chunnior/users/internal/domain"
 	"github.com/chunnior/users/internal/domain/callback"
 	"github.com/chunnior/users/internal/domain/user"
 	"github.com/chunnior/users/pkg/config"
@@ -27,12 +28,16 @@ type LoginResponse struct {
 type LoginService struct {
 	httpClient *http.Client
 	config     config.Config
+	userRepo   user.UserRepository
+	logger     domain.Logger
 }
 
-func NewLoginService(config *config.Config, httpClient *http.Client) *LoginService {
+func NewLoginService(userRepo user.UserRepository, config *config.Config, httpClient *http.Client, logger domain.Logger) *LoginService {
 	return &LoginService{
 		httpClient: httpClient,
 		config:     *config,
+		userRepo:   userRepo,
+		logger:     logger,
 	}
 }
 
@@ -80,20 +85,24 @@ func (s *LoginService) Callback(ctx context.Context, request callback.CallbackRe
 		if err != nil {
 			return user.GenericUser{}, err
 		}
-		//	TODO: Crear objeto usuario generico
 		genericUser = user.GenericUser{
 			Provider:       provider,
 			ProviderUserID: callbackResponse.ID,
 			UserFullname:   callbackResponse.DisplayName,
 			Email:          callbackResponse.Email,
-			Token:          callbackResponse.Token,
+			AccessToken:    callbackResponse.AccessToken,
 			RefreshToken:   callbackResponse.RefreshToken,
 		}
 	default:
 		return user.GenericUser{}, errors.New("invalid provider")
 	}
-	//	TODO: Crear usuario en BD
-	genericUser.ID = "asd"
+	//	Crea/actualiza usuario en BD
+	userID, err := s.userRepo.SaveUser(ctx, genericUser)
+	if err != nil {
+
+		return user.GenericUser{}, err
+	}
+	genericUser.ID = userID
 	return genericUser, nil
 }
 
