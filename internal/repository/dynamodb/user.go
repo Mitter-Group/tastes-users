@@ -50,8 +50,6 @@ func (r *UserRepository) SaveUser(ctx context.Context, user user.GenericUser) (s
 		existingUser.Provider = user.Provider
 		existingUser.ProviderUserID = user.ProviderUserID
 		existingUser.UserFullname = user.UserFullname
-		existingUser.AccessToken = user.AccessToken
-		existingUser.RefreshToken = user.RefreshToken
 
 		err := r.UpdateUser(ctx, *existingUser)
 		if err != nil {
@@ -110,8 +108,6 @@ func (r *UserRepository) UpdateUser(ctx context.Context, updatedUser user.Generi
 		":pu": {S: aws.String(updatedUser.ProviderUserID)},
 		":uf": {S: aws.String(updatedUser.UserFullname)}, // Aquí ajustamos el nombre
 		":e":  {S: aws.String(updatedUser.Email)},
-		":at": {S: aws.String(updatedUser.AccessToken)},
-		":rt": {S: aws.String(updatedUser.RefreshToken)},
 	}
 
 	input := &dynamodb.UpdateItemInput{
@@ -121,8 +117,9 @@ func (r *UserRepository) UpdateUser(ctx context.Context, updatedUser user.Generi
 			"ID": {S: aws.String(updatedUser.ID)},
 		},
 		ReturnValues:     aws.String("UPDATED_NEW"),
-		UpdateExpression: aws.String("set Provider = :p, ProviderUserID = :pu, UserFullname = :uf, Email = :e, AccessToken = :at, RefreshToken = :rt"),
+		UpdateExpression: aws.String("set Provider = :p, ProviderUserID = :pu, UserFullname = :uf, Email = :e"),
 	}
+	// , AccessToken = :at, RefreshToken = :rt
 	var err error
 	_, err = r.db.UpdateItemWithContext(ctx, input)
 	if err != nil {

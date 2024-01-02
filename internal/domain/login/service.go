@@ -68,7 +68,6 @@ func (s *LoginService) Callback(ctx context.Context, request callback.CallbackRe
 	}
 	var genericUser user.GenericUser
 	var callbackResponse callback.CallbackResponse
-	//	var err error
 
 	switch provider {
 	case "spotify":
@@ -90,8 +89,6 @@ func (s *LoginService) Callback(ctx context.Context, request callback.CallbackRe
 			ProviderUserID: callbackResponse.ID,
 			UserFullname:   callbackResponse.DisplayName,
 			Email:          callbackResponse.Email,
-			AccessToken:    callbackResponse.AccessToken,
-			RefreshToken:   callbackResponse.RefreshToken,
 		}
 	default:
 		return user.GenericUser{}, errors.New("invalid provider")
@@ -99,7 +96,6 @@ func (s *LoginService) Callback(ctx context.Context, request callback.CallbackRe
 	//	Crea/actualiza usuario en BD
 	userID, err := s.userRepo.SaveUser(ctx, genericUser)
 	if err != nil {
-
 		return user.GenericUser{}, err
 	}
 	genericUser.ID = userID

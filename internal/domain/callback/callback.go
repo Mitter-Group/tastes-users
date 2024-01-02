@@ -19,9 +19,6 @@ type CallbackResponse struct {
 	Email        string       `json:"email"`
 	Product      string       `json:"product"`
 	Birthdate    string       `json:"birthdate"`
-	AccessToken  string       `json:"access_token"`
-	RefreshToken string       `json:"refresh_token"`
-	TokenType    string       `json:"token_type"`
 }
 
 type ExternalURLs struct {
