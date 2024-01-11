@@ -51,6 +51,8 @@ func (s *LoginService) Login(ctx context.Context, request LoginRequest) (LoginRe
 	switch request.Provider {
 	case "spotify":
 		loginResponse, err = callProviderLogin(s.config.SpotifyServiceURL, request.CallbackURL)
+	case "youtube":
+		loginResponse, err = callProviderLogin(s.config.YoutubeServiceURL, request.CallbackURL)
 	default:
 		return LoginResponse{}, errors.New("invalid provider")
 	}
@@ -72,6 +74,26 @@ func (s *LoginService) Callback(ctx context.Context, request callback.CallbackRe
 	switch provider {
 	case "spotify":
 		url, err := url.Parse(s.config.SpotifyServiceURL + "/callback")
+		if err != nil {
+			return user.GenericUser{}, err
+		}
+		q := url.Query()
+		q.Add("code", request.Code)
+		q.Add("state", request.State)
+		url.RawQuery = q.Encode()
+
+		callbackResponse, err = callProviderCallback(url.String())
+		if err != nil {
+			return user.GenericUser{}, err
+		}
+		genericUser = user.GenericUser{
+			Provider:       provider,
+			ProviderUserID: callbackResponse.ID,
+			UserFullname:   callbackResponse.DisplayName,
+			Email:          callbackResponse.Email,
+		}
+	case "youtube":
+		url, err := url.Parse(s.config.YoutubeServiceURL + "/callback")
 		if err != nil {
 			return user.GenericUser{}, err
 		}
