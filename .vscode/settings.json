@@ -1,4 +1,26 @@
 {
   "go.lintTool": "golangci-lint",
-  "go.lintFlags": ["--fast"]
+  "go.lintFlags": [
+    "--fast"
+  ],
+  "workbench.colorCustomizations": {
+    "activityBar.activeBackground": "#423e87",
+    "activityBar.background": "#423e87",
+    "activityBar.foreground": "#e7e7e7",
+    "activityBar.inactiveForeground": "#e7e7e799",
+    "activityBarBadge.background": "#160b0a",
+    "activityBarBadge.foreground": "#e7e7e7",
+    "commandCenter.border": "#e7e7e799",
+    "sash.hoverBorder": "#423e87",
+    "statusBar.background": "#312e64",
+    "statusBar.foreground": "#e7e7e7",
+    "statusBarItem.hoverBackground": "#423e87",
+    "statusBarItem.remoteBackground": "#312e64",
+    "statusBarItem.remoteForeground": "#e7e7e7",
+    "titleBar.activeBackground": "#312e64",
+    "titleBar.activeForeground": "#e7e7e7",
+    "titleBar.inactiveBackground": "#312e6499",
+    "titleBar.inactiveForeground": "#e7e7e799"
+  },
+  "peacock.color": "#312e64"
 }
