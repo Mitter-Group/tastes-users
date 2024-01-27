@@ -13,6 +13,8 @@ type Config struct {
 	YoutubeServiceURL      string
 	AwsProfile             string
 	AwsDynamoUserTableName string
+	EncryptedAPIKey        string
+	SecretKey              string
 }
 
 func NewConfig() *Config {
@@ -27,6 +29,8 @@ func NewConfig() *Config {
 		YoutubeServiceURL:      getEnv("YOUTUBE_SERVICE_URL", "http://localhost:8085"),
 		AwsProfile:             getEnv("AWS_PROFILE", "default"),
 		AwsDynamoUserTableName: getEnv("AWS_DYNAMO_USER_TABLE_NAME", "Users"),
+		EncryptedAPIKey:        getEnv("ENCRYPTED_API_KEY", ""),
+		SecretKey:              getEnv("SECRET_KEY", ""),
 	}
 }
 
