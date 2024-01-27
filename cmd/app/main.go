@@ -23,7 +23,6 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-
 	// Load the configuration
 	cfg := config.NewConfig()
 
