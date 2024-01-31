@@ -10,6 +10,14 @@ type GenericUser struct {
 	Email          string `json:"email" dynamodbav:"Email"`
 }
 
+type NewUserMessage struct {
+	UserID         string `json:"user_id"`
+	Email          string `json:"email"`
+	Provider       string `json:"provider"`
+	ProviderUserID string `json:"provider_user_id"`
+	CreationDate   string `json:"creation_date"`
+}
+
 type UserRepository interface {
 	SaveUser(ctx context.Context, user GenericUser) (string, error)
 }

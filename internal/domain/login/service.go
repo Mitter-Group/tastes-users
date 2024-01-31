@@ -8,10 +8,12 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"time"
 
 	"github.com/chunnior/users/internal/domain"
 	"github.com/chunnior/users/internal/domain/callback"
 	"github.com/chunnior/users/internal/domain/user"
+	"github.com/chunnior/users/internal/infrastructure/aws/sqs"
 	"github.com/chunnior/users/pkg/config"
 )
 
@@ -30,14 +32,16 @@ type LoginService struct {
 	config     config.Config
 	userRepo   user.UserRepository
 	logger     domain.Logger
+	sqsClient  *sqs.SQS
 }
 
-func NewLoginService(userRepo user.UserRepository, config *config.Config, httpClient *http.Client, logger domain.Logger) *LoginService {
+func NewLoginService(userRepo user.UserRepository, sqsClient *sqs.SQS, config *config.Config, httpClient *http.Client, logger domain.Logger) *LoginService {
 	return &LoginService{
 		httpClient: httpClient,
 		config:     *config,
 		userRepo:   userRepo,
 		logger:     logger,
+		sqsClient:  sqsClient,
 	}
 }
 
@@ -120,8 +124,27 @@ func (s *LoginService) Callback(ctx context.Context, request callback.CallbackRe
 	if err != nil {
 		return user.GenericUser{}, err
 	}
+
+	// envia mensaje a la queue
+	err = s.createAndSendUserMessage(userID, genericUser)
+	if err != nil {
+		fmt.Println("No se pudo enviar el mensaje a la queue", err)
+	}
+
 	genericUser.ID = userID
 	return genericUser, nil
+}
+
+func (s *LoginService) createAndSendUserMessage(userID string, genericUser user.GenericUser) error {
+	newUserMessage := user.NewUserMessage{
+		UserID:         userID,
+		Email:          genericUser.Email,
+		Provider:       genericUser.Provider,
+		ProviderUserID: genericUser.ProviderUserID,
+		CreationDate:   time.Now().Format("2006-01-02 15:04:05"),
+	}
+
+	return s.sqsClient.SendMessage(s.config.NewUserQueueURL, newUserMessage)
 }
 
 func callProviderLogin(providerUrl string, callbackUrl string) (LoginResponse, error) {

@@ -9,6 +9,7 @@ import (
 	"github.com/chunnior/users/internal/app/router"
 	"github.com/chunnior/users/internal/domain/login"
 	"github.com/chunnior/users/internal/domain/provider"
+	"github.com/chunnior/users/internal/infrastructure/aws/sqs"
 	"github.com/chunnior/users/internal/infrastructure/logger"
 	"github.com/chunnior/users/internal/infrastructure/middleware"
 	"github.com/chunnior/users/internal/repository/dynamodb"
@@ -37,7 +38,12 @@ func main() {
 
 	userRepo := dynamodb.NewUserRepository(cfg, logger)
 
-	loginService := login.NewLoginService(userRepo, cfg, &http.Client{}, logger)
+	sqsClient, err := sqs.NewSQS(cfg)
+	if err != nil {
+		panic(err)
+	}
+
+	loginService := login.NewLoginService(userRepo, sqsClient, cfg, &http.Client{}, logger)
 	providerService := provider.NewProviderService(cfg, &http.Client{}, logger)
 
 	loginHandler := handler.NewLoginHandler(*loginService)

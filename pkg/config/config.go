@@ -15,6 +15,7 @@ type Config struct {
 	AwsDynamoUserTableName string
 	EncryptedAPIKey        string
 	SecretKey              string
+	NewUserQueueURL        string
 }
 
 func NewConfig() *Config {
