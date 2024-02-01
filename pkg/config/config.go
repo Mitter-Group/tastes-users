@@ -32,6 +32,7 @@ func NewConfig() *Config {
 		AwsDynamoUserTableName: getEnv("AWS_DYNAMO_USER_TABLE_NAME", "Users"),
 		EncryptedAPIKey:        getEnv("ENCRYPTED_API_KEY", ""),
 		SecretKey:              getEnv("SECRET_KEY", ""),
+		NewUserQueueURL:        getEnv("QUEUE_URL", ""),
 	}
 }
 

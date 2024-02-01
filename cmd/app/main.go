@@ -11,7 +11,6 @@ import (
 	"github.com/chunnior/users/internal/domain/provider"
 	"github.com/chunnior/users/internal/infrastructure/aws/sqs"
 	"github.com/chunnior/users/internal/infrastructure/logger"
-	"github.com/chunnior/users/internal/infrastructure/middleware"
 	"github.com/chunnior/users/internal/repository/dynamodb"
 	"github.com/chunnior/users/pkg/config"
 
@@ -27,14 +26,14 @@ func main() {
 	// Load the configuration
 	cfg := config.NewConfig()
 
-	secretKey := cfg.SecretKey
-	encryptedAPIKey := cfg.EncryptedAPIKey
+	// secretKey := cfg.SecretKey
+	// encryptedAPIKey := cfg.EncryptedAPIKey
 	// Create a new Fiber instance
 	app := fiber.New()
 
-	authMiddleware := middleware.AuthMiddleware(encryptedAPIKey, secretKey)
+	// authMiddleware := middleware.AuthMiddleware(encryptedAPIKey, secretKey)
 
-	app.Use(authMiddleware)
+	// app.Use(authMiddleware)
 
 	userRepo := dynamodb.NewUserRepository(cfg, logger)
 
