@@ -175,6 +175,10 @@ func callProviderCallback(providerUrl string) (callback.CallbackResponse, error)
 	}
 	defer resp.Body.Close()
 
+	if resp.StatusCode != http.StatusOK {
+		return callback.CallbackResponse{}, errors.New("error en la respuesta del proveedor")
+	}
+
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		fmt.Println("Error ", err)
