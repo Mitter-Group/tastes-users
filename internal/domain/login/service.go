@@ -15,6 +15,8 @@ import (
 	"github.com/chunnior/users/internal/domain/user"
 	"github.com/chunnior/users/internal/infrastructure/aws/sqs"
 	"github.com/chunnior/users/pkg/config"
+	"github.com/zmb3/spotify/v2"
+	v2 "google.golang.org/api/oauth2/v2"
 )
 
 type LoginRequest struct {
@@ -73,7 +75,7 @@ func (s *LoginService) Callback(ctx context.Context, request callback.CallbackRe
 		return user.GenericUser{}, errors.New("provider is required")
 	}
 	var genericUser user.GenericUser
-	var callbackResponse callback.CallbackResponse
+	var requestUrl string
 
 	switch provider {
 	case "spotify":
@@ -85,17 +87,7 @@ func (s *LoginService) Callback(ctx context.Context, request callback.CallbackRe
 		q.Add("code", request.Code)
 		q.Add("state", request.State)
 		url.RawQuery = q.Encode()
-
-		callbackResponse, err = callProviderCallback(url.String())
-		if err != nil {
-			return user.GenericUser{}, err
-		}
-		genericUser = user.GenericUser{
-			Provider:       provider,
-			ProviderUserID: callbackResponse.ID,
-			UserFullname:   callbackResponse.DisplayName,
-			Email:          callbackResponse.Email,
-		}
+		requestUrl = url.String()
 	case "youtube":
 		url, err := url.Parse(s.config.YoutubeServiceURL + "/callback")
 		if err != nil {
@@ -105,19 +97,13 @@ func (s *LoginService) Callback(ctx context.Context, request callback.CallbackRe
 		q.Add("code", request.Code)
 		q.Add("state", request.State)
 		url.RawQuery = q.Encode()
-
-		callbackResponse, err = callProviderCallback(url.String())
-		if err != nil {
-			return user.GenericUser{}, err
-		}
-		genericUser = user.GenericUser{
-			Provider:       provider,
-			ProviderUserID: callbackResponse.ID,
-			UserFullname:   callbackResponse.DisplayName,
-			Email:          callbackResponse.Email,
-		}
+		requestUrl = url.String()
 	default:
 		return user.GenericUser{}, errors.New("invalid provider")
+	}
+	genericUser, err := callProviderCallback(requestUrl, provider)
+	if err != nil {
+		return user.GenericUser{}, err
 	}
 	//	Crea/actualiza usuario en BD
 	userID, err := s.userRepo.SaveUser(ctx, genericUser)
@@ -168,28 +154,53 @@ func callProviderLogin(providerUrl string, callbackUrl string) (LoginResponse, e
 	return loginResponse, nil
 }
 
-func callProviderCallback(providerUrl string) (callback.CallbackResponse, error) {
+func callProviderCallback(providerUrl string, provider string) (user.GenericUser, error) {
 	resp, err := http.Get(providerUrl)
 	if err != nil {
-		return callback.CallbackResponse{}, err
+		return user.GenericUser{}, err
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return callback.CallbackResponse{}, errors.New("error en la respuesta del proveedor")
+		return user.GenericUser{}, errors.New("error en la respuesta del proveedor")
 	}
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		fmt.Println("Error ", err)
-		return callback.CallbackResponse{}, err
+		return user.GenericUser{}, err
 	}
+	return mapProviderResponse(provider, body)
+}
 
-	// Determinar el proveedor y deserializar en la estructura apropiada
-	var user callback.CallbackResponse
-	if err := json.Unmarshal(body, &user); err != nil {
-		fmt.Println("Error ", err)
-		return callback.CallbackResponse{}, err
+func mapProviderResponse(provider string, body []byte) (user.GenericUser, error) {
+	var genericUser user.GenericUser
+	switch provider {
+	case "spotify":
+		var userInfo *spotify.PrivateUser
+		if err := json.Unmarshal(body, &userInfo); err != nil {
+			fmt.Println("Error ", err)
+			return user.GenericUser{}, err
+		}
+		genericUser = user.GenericUser{
+			Provider:       provider,
+			ProviderUserID: userInfo.ID,
+			Email:          userInfo.Email,
+			UserFullname:   userInfo.DisplayName,
+		}
+
+	case "youtube":
+		var userInfo v2.Userinfo
+		if err := json.Unmarshal(body, &userInfo); err != nil {
+			fmt.Println("Error ", err)
+			return user.GenericUser{}, err
+		}
+		genericUser = user.GenericUser{
+			Provider:       provider,
+			ProviderUserID: userInfo.Id,
+		}
+	default:
+		return user.GenericUser{}, errors.New("invalid provider")
 	}
-	return user, nil
+	return genericUser, nil
 }
