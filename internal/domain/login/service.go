@@ -69,10 +69,10 @@ func (s *LoginService) Login(ctx context.Context, request LoginRequest) (LoginRe
 	return loginResponse, nil
 }
 
-func (s *LoginService) Callback(ctx context.Context, request callback.CallbackRequestBody) (user.GenericUser, error) {
+func (s *LoginService) Callback(ctx context.Context, request callback.CallbackRequestBody) (user.UserData, error) {
 	provider := request.Provider
 	if provider == "" {
-		return user.GenericUser{}, errors.New("provider is required")
+		return user.UserData{}, errors.New("provider is required")
 	}
 	var genericUser user.GenericUser
 	var requestUrl string
@@ -81,7 +81,7 @@ func (s *LoginService) Callback(ctx context.Context, request callback.CallbackRe
 	case "spotify":
 		url, err := url.Parse(s.config.SpotifyServiceURL + "/callback")
 		if err != nil {
-			return user.GenericUser{}, err
+			return user.UserData{}, err
 		}
 		q := url.Query()
 		q.Add("code", request.Code)
@@ -91,7 +91,7 @@ func (s *LoginService) Callback(ctx context.Context, request callback.CallbackRe
 	case "youtube":
 		url, err := url.Parse(s.config.YoutubeServiceURL + "/callback")
 		if err != nil {
-			return user.GenericUser{}, err
+			return user.UserData{}, err
 		}
 		q := url.Query()
 		q.Add("code", request.Code)
@@ -99,26 +99,26 @@ func (s *LoginService) Callback(ctx context.Context, request callback.CallbackRe
 		url.RawQuery = q.Encode()
 		requestUrl = url.String()
 	default:
-		return user.GenericUser{}, errors.New("invalid provider")
+		return user.UserData{}, errors.New("invalid provider")
 	}
 	genericUser, err := callProviderCallback(requestUrl, provider)
 	if err != nil {
-		return user.GenericUser{}, err
+		return user.UserData{}, err
 	}
 	//	Crea/actualiza usuario en BD
-	userID, err := s.userRepo.SaveUser(ctx, genericUser)
+	savedUser, err := s.userRepo.SaveUser(ctx, genericUser)
 	if err != nil {
-		return user.GenericUser{}, err
+		return user.UserData{}, err
 	}
 
 	// envia mensaje a la queue
-	err = s.createAndSendUserMessage(userID, genericUser)
+	err = s.createAndSendUserMessage(savedUser.ID, genericUser)
 	if err != nil {
 		fmt.Println("No se pudo enviar el mensaje a la queue", err)
 	}
 
-	genericUser.ID = userID
-	return genericUser, nil
+	// genericUser.ID = userID
+	return savedUser, nil
 }
 
 func (s *LoginService) createAndSendUserMessage(userID string, genericUser user.GenericUser) error {
@@ -198,6 +198,9 @@ func mapProviderResponse(provider string, body []byte) (user.GenericUser, error)
 		genericUser = user.GenericUser{
 			Provider:       provider,
 			ProviderUserID: userInfo.Id,
+			Email:          userInfo.Email,
+			UserFullname:   userInfo.Name,
+			//Picture
 		}
 	default:
 		return user.GenericUser{}, errors.New("invalid provider")

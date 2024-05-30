@@ -36,39 +36,48 @@ func NewUserRepository(config *config.Config, logger domain.Logger) *UserReposit
 	}
 }
 
-func (r *UserRepository) SaveUser(ctx context.Context, user user.GenericUser) (string, error) {
+func (r *UserRepository) SaveUser(ctx context.Context, userInput user.GenericUser) (*user.UserData, error) {
 	// Primero, intenta obtener el usuario por correo electrónico
-	existingUser, err := r.GetUserByEmail(ctx, user.Email)
+	existingUser, err := r.GetUserByEmail(ctx, userInput.Email)
 	if err != nil {
 		// Si hay un error al obtener el usuario, devuélvelo
 		r.logger.Error("error getting user by email", "error", err)
-		return "", err
+		return nil, err
 	}
 
 	if existingUser != nil {
 		// Si el usuario existe, actualiza sus datos
-		existingUser.Provider = user.Provider
-		existingUser.ProviderUserID = user.ProviderUserID
-		existingUser.UserFullname = user.UserFullname
+		existingUser = updateOrAddProvider(userInput, existingUser)
 
-		err := r.UpdateUser(ctx, *existingUser)
+		err := r.UpdateUserProviders(ctx, *existingUser)
 		if err != nil {
-			return "", err
+			return nil, err
 		}
 
-		return existingUser.ID, nil
+		return existingUser, nil
 	} else {
-		// Si el usuario no existe, crea uno nuevo
-		newUserID, err := r.CreateUser(ctx, &user)
-		if err != nil {
-			return "", err
+		newUser := user.UserData{
+			Email: userInput.Email,
+			Providers: []user.ProviderData{
+				{
+					Provider:       userInput.Provider,
+					ProviderUserID: userInput.ProviderUserID,
+					UserFullname:   userInput.UserFullname,
+					Email:          userInput.Email,
+				},
+			},
 		}
-
-		return newUserID, nil
+		// Si el usuario no existe, crea uno nuevo
+		newUserID, err := r.CreateUser(ctx, &newUser)
+		if err != nil {
+			return nil, err
+		}
+		newUser.ID = newUserID
+		return &newUser, nil
 	}
 }
 
-func (r *UserRepository) GetUserByEmail(ctx context.Context, email string) (*user.GenericUser, error) {
+func (r *UserRepository) GetUserByEmail(ctx context.Context, email string) (*user.UserData, error) {
 	input := &dynamodb.QueryInput{
 		TableName: aws.String(r.config.AwsDynamoUserTableName),
 		IndexName: aws.String("EmailIndex"), // Asegúrate de que este nombre coincide con el nombre del índice global secundario que creaste en Terraform
@@ -93,7 +102,7 @@ func (r *UserRepository) GetUserByEmail(ctx context.Context, email string) (*use
 		return nil, nil
 	}
 
-	var user user.GenericUser
+	var user user.UserData
 	err = dynamodbattribute.UnmarshalMap(result.Items[0], &user)
 	if err != nil {
 		return nil, err
@@ -102,33 +111,89 @@ func (r *UserRepository) GetUserByEmail(ctx context.Context, email string) (*use
 	return &user, nil
 }
 
-func (r *UserRepository) UpdateUser(ctx context.Context, updatedUser user.GenericUser) error {
-	expressionValues := map[string]*dynamodb.AttributeValue{
-		":p":  {S: aws.String(updatedUser.Provider)},
-		":pu": {S: aws.String(updatedUser.ProviderUserID)},
-		":uf": {S: aws.String(updatedUser.UserFullname)}, // Aquí ajustamos el nombre
-		":e":  {S: aws.String(updatedUser.Email)},
+func updateOrAddProvider(gUser user.GenericUser, userData *user.UserData) *user.UserData {
+	found := false
+
+	// Revisar cada proveedor existente en UserData
+	for i, provider := range userData.Providers {
+		if provider.Provider == gUser.Provider && provider.ProviderUserID == gUser.ProviderUserID {
+			// Actualiza el nombre si el proveedor y el ID del proveedor coinciden
+			userData.Providers[i].UserFullname = gUser.UserFullname
+			found = true
+			break
+		}
 	}
 
+	// Si no se encontró un proveedor existente, añade uno nuevo
+	if !found {
+		newProvider := user.ProviderData{
+			Provider:       gUser.Provider,
+			ProviderUserID: gUser.ProviderUserID,
+			UserFullname:   gUser.UserFullname,
+			Email:          gUser.Email,
+		}
+		userData.Providers = append(userData.Providers, newProvider)
+	}
+
+	return userData
+}
+
+func (r *UserRepository) UpdateUserProviders(ctx context.Context, updatedUser user.UserData) error {
+
+	providersAV, err := dynamodbattribute.MarshalList(updatedUser.Providers)
+	if err != nil {
+		r.logger.Error("error marshalling providers", "error", err)
+		return err
+	}
+
+	expressionValues := map[string]*dynamodb.AttributeValue{
+		":p": {L: providersAV},
+	}
+	// Preparar el input para UpdateItem
 	input := &dynamodb.UpdateItemInput{
-		ExpressionAttributeValues: expressionValues,
-		TableName:                 aws.String(r.config.AwsDynamoUserTableName),
+		TableName: aws.String(r.config.AwsDynamoUserTableName),
 		Key: map[string]*dynamodb.AttributeValue{
 			"ID": {S: aws.String(updatedUser.ID)},
 		},
-		ReturnValues:     aws.String("UPDATED_NEW"),
-		UpdateExpression: aws.String("set Provider = :p, ProviderUserID = :pu, UserFullname = :uf, Email = :e"),
+		UpdateExpression:          aws.String("set Providers = :p"),
+		ExpressionAttributeValues: expressionValues,
+		ReturnValues:              aws.String("UPDATED_NEW"),
 	}
-	// , AccessToken = :at, RefreshToken = :rt
-	var err error
+
+	// Realizar la actualización en DynamoDB
 	_, err = r.db.UpdateItemWithContext(ctx, input)
 	if err != nil {
-		r.logger.Error("error updating user", "error", err)
+		r.logger.Error("error updating user providers", "error", err)
 	}
 	return err
+	/*
+		expressionValues := map[string]*dynamodb.AttributeValue{
+			":p":  {S: aws.String(updatedUser.Provider)},
+			":pu": {S: aws.String(updatedUser.ProviderUserID)},
+			":uf": {S: aws.String(updatedUser.UserFullname)}, // Aquí ajustamos el nombre
+			":e":  {S: aws.String(updatedUser.Email)},
+		}
+
+		input := &dynamodb.UpdateItemInput{
+			ExpressionAttributeValues: expressionValues,
+			TableName:                 aws.String(r.config.AwsDynamoUserTableName),
+			Key: map[string]*dynamodb.AttributeValue{
+				"ID": {S: aws.String(updatedUser.ID)},
+			},
+			ReturnValues:     aws.String("UPDATED_NEW"),
+			UpdateExpression: aws.String("set Provider = :p, ProviderUserID = :pu, UserFullname = :uf, Email = :e"),
+		}
+		// , AccessToken = :at, RefreshToken = :rt
+		var err error
+		_, err = r.db.UpdateItemWithContext(ctx, input)
+		if err != nil {
+			r.logger.Error("error updating user", "error", err)
+		}
+		return err
+	*/
 }
 
-func (r *UserRepository) CreateUser(ctx context.Context, user *user.GenericUser) (string, error) {
+func (r *UserRepository) CreateUser(ctx context.Context, user *user.UserData) (string, error) {
 	newID := uuid.New().String()
 	user.ID = newID
 
