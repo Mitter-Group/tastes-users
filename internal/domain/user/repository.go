@@ -8,12 +8,15 @@ type GenericUser struct {
 	ProviderUserID string `json:"provider_user_id" dynamodbav:"ProviderUserID"`
 	UserFullname   string `json:"user_fullname" dynamodbav:"UserFullname"`
 	Email          string `json:"email" dynamodbav:"Email"`
+	ProfilePicture string `json:"profile_picture" dynamodbav:"ProfilePicture"`
 }
 
 type UserData struct {
-	ID        string         `json:"ID" dynamodbav:"ID"`
-	Email     string         `json:"email" dynamodbav:"Email"`
-	Providers []ProviderData `json:"providers" dynamodbav:"Providers"`
+	ID             string         `json:"ID" dynamodbav:"ID"`
+	Email          string         `json:"email" dynamodbav:"Email"`
+	UserFullname   string         `json:"user_fullname" dynamodbav:"UserFullname"`
+	ProfilePicture string         `json:"profile_picture" dynamodbav:"ProfilePicture"`
+	Providers      []ProviderData `json:"providers" dynamodbav:"Providers"`
 }
 
 type ProviderData struct {
@@ -32,5 +35,5 @@ type NewUserMessage struct {
 }
 
 type UserRepository interface {
-	SaveUser(ctx context.Context, user GenericUser) (UserData, error)
+	SaveUser(ctx context.Context, user GenericUser) (*UserData, error)
 }

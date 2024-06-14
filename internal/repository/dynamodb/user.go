@@ -57,7 +57,9 @@ func (r *UserRepository) SaveUser(ctx context.Context, userInput user.GenericUse
 		return existingUser, nil
 	} else {
 		newUser := user.UserData{
-			Email: userInput.Email,
+			Email:          userInput.Email,
+			UserFullname:   userInput.UserFullname,
+			ProfilePicture: userInput.ProfilePicture,
 			Providers: []user.ProviderData{
 				{
 					Provider:       userInput.Provider,
