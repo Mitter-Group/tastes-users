@@ -38,3 +38,4 @@ darwin_arm64/
 .DS_Store
 .env
 .env.prod
+.env.dev

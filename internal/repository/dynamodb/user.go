@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
 	"github.com/aws/aws-sdk-go/service/dynamodb/dynamodbattribute"
@@ -20,10 +21,31 @@ type UserRepository struct {
 }
 
 func NewUserRepository(config *config.Config, logger domain.Logger) *UserRepository {
-	sess, err := session.NewSessionWithOptions(session.Options{
-		Profile:           config.AwsProfile,
-		SharedConfigState: session.SharedConfigEnable,
-	})
+	var sess *session.Session
+	var err error
+	// fmt.Printf("Configxxxx: %+v\n", config)
+
+	switch config.Enviroment {
+	case "production":
+		sess, err = session.NewSession(&aws.Config{
+			Region: aws.String(config.AwsRegion),
+		})
+	case "local":
+		sess, err = session.NewSessionWithOptions(session.Options{
+			Profile:           config.AwsProfile,
+			SharedConfigState: session.SharedConfigEnable,
+		})
+	default:
+		awsConfig := &aws.Config{
+			Region:      aws.String(config.AwsRegion),
+			Credentials: credentials.NewEnvCredentials(),
+		}
+		sess, err = session.NewSessionWithOptions(session.Options{
+			Profile:           config.AwsProfile,
+			SharedConfigState: session.SharedConfigEnable,
+			Config:            *awsConfig,
+		})
+	}
 
 	if err != nil {
 		panic(err)
