@@ -19,9 +19,8 @@ RUN apk --no-cache add ca-certificates
 
 WORKDIR /root/
 
-# Copia el ejecutable y el archivo .env desde la etapa de compilación
+# Copia el ejecutable de la etapa de compilación
 COPY --from=builder /app/user-service .
-COPY --from=builder /app/.env .
 
 # Expone el puerto que tu aplicación utiliza
 EXPOSE 8082
