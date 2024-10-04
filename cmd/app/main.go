@@ -45,11 +45,12 @@ func main() {
 	loginService := login.NewLoginService(userRepo, sqsClient, cfg, &http.Client{}, logger)
 	providerService := provider.NewProviderService(cfg, &http.Client{}, logger)
 
+	healthHandler := handler.NewHealthHandler()
 	loginHandler := handler.NewLoginHandler(*loginService)
 	providerHandler := handler.NewProviderHandler(*providerService)
 
 	// Setup the routes
-	router.SetupRoutes(app, loginHandler, providerHandler)
+	router.SetupRoutes(app, loginHandler, providerHandler, healthHandler)
 
 	// Start the server
 	log.Fatal(app.Listen(":" + cfg.AppPort))
