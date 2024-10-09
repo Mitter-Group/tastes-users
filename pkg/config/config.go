@@ -22,7 +22,7 @@ type Config struct {
 
 func NewConfig() *Config {
 	err := godotenv.Load()
-	if err != nil {
+	if err != nil && os.Getenv("ENV") == "local" {
 		log.Fatal("Error loading .env file")
 	}
 
