@@ -32,7 +32,7 @@ func NewConfig() *Config {
 		SpotifyServiceURL:      getEnv("SPOTIFY_SERVICE_URL", "http://localhost:8083"),
 		YoutubeServiceURL:      getEnv("YOUTUBE_SERVICE_URL", "http://localhost:8085"),
 		AwsProfile:             getEnv("AWS_PROFILE", "default"),
-		AwsDynamoUserTableName: getEnv("AWS_DYNAMO_USER_TABLE_NAME", "Users"),
+		AwsDynamoUserTableName: getEnv("AWS_DYNAMO_USER_TABLE_ARN", "Users"),
 		AwsRegion:              getEnv("AWS_REGION", "us-west-1"),
 		EncryptedAPIKey:        getEnv("ENCRYPTED_API_KEY", ""),
 		SecretKey:              getEnv("SECRET_KEY", ""),
