@@ -26,6 +26,7 @@ func (h *LoginHandler) Login(c *fiber.Ctx) error {
 	var request login.LoginRequest
 
 	if err := c.BodyParser(&request); err != nil {
+		h.logger.Error(err.Error())
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": "Cannot parse JSON",
 		})
@@ -33,6 +34,7 @@ func (h *LoginHandler) Login(c *fiber.Ctx) error {
 
 	response, err := h.loginService.Login(c.Context(), request)
 	if err != nil {
+		h.logger.Error(err.Error())
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": "Login failed",
 		})
@@ -60,6 +62,7 @@ func (h *LoginHandler) Callback(c *fiber.Ctx) error {
 
 	response, err := h.loginService.Callback(c.Context(), callbackRequest)
 	if err != nil {
+		h.logger.Error(err.Error())
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": "Callback failed",
 		})
