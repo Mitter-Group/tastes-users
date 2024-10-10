@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/chunnior/users/internal/domain"
 	"github.com/chunnior/users/internal/domain/callback"
 	"github.com/chunnior/users/internal/domain/login"
 	"github.com/gofiber/fiber/v2"
@@ -11,11 +12,13 @@ import (
 
 type LoginHandler struct {
 	loginService login.LoginService
+	logger       domain.Logger
 }
 
-func NewLoginHandler(loginService login.LoginService) *LoginHandler {
+func NewLoginHandler(loginService login.LoginService, logger domain.Logger) *LoginHandler {
 	return &LoginHandler{
 		loginService: loginService,
+		logger:       logger,
 	}
 }
 

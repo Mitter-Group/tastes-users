@@ -46,7 +46,7 @@ func main() {
 	providerService := provider.NewProviderService(cfg, &http.Client{}, logger)
 
 	healthHandler := handler.NewHealthHandler()
-	loginHandler := handler.NewLoginHandler(*loginService)
+	loginHandler := handler.NewLoginHandler(*loginService, logger)
 	providerHandler := handler.NewProviderHandler(*providerService)
 
 	// Setup the routes
